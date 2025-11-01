@@ -40,4 +40,33 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.run_polling()
-  
+  import os
+from flask import Flask
+from threading import Thread
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Tianzibot is running!"
+
+def run():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# 🔹 在主程序开始前调用它
+if __name__ == "__main__":
+    keep_alive()
+
+    # 你的 Telegram 机器人启动逻辑
+    from telegram.ext import ApplicationBuilder
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    app = ApplicationBuilder().token(os.environ["TOKEN"]).build()
+    print("✅ TianziBot is running on Render...")
+    app.run_polling()
