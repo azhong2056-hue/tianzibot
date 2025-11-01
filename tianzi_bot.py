@@ -31,3 +31,13 @@ log = logging.getLogger("tianzibot")
 STATE = {}
 
 # ...（此处省略原始大段代码，为节省空间）
+from telegram.ext import ApplicationBuilder, CommandHandler
+
+async def start(update, context):
+    await update.message.reply_text("✅ 天子机器人已启动！")
+
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.run_polling()
+  
