@@ -1,72 +1,82 @@
 # -*- coding: utf-8 -*-
-import logging, requests
-from datetime import datetime
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.constants import ParseMode
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-
-BOT_TOKEN      = "8249732366:AAERXVI64jS8LTFr79Wr0WVL9CEYVRRTgFg"
-BOT_USERNAME   = "tzgj_bot"
-ADMIN_GROUP_ID = 3234203217
-
-OFFICIAL_SITE_TEXT = "0597.com"
-OFFICIAL_SITE_URL  = "https://0597vip3.com"
-GAME_SHORT_NAME    = "tzyl"
-
-WELCOME_IMAGE  = "https://t.me/tztz/26"
-PROMO_IMAGE    = "https://t.me/tztz/13"
-DOWNLOAD_IMAGE = "https://t.me/tztz/18"
-INVITE_IMAGE   = "https://t.me/tztz/81"
-
-IOS_URL     = "https://hj-hashgo.s3.ap-southeast-1.amazonaws.com/99999999/app/tz0597.mobileconfig"
-ANDROID_URL = "https://d179n5kbhqvh4f.cloudfront.net/sw2xs-ik5tg.apk"
-SUPPORT_URL = "https://t.me/tzkf"
-CHANNEL_URL = "https://t.me/tztz"
-
-API_GET_INVITE = "https://h5.usdt-prod.com/finance-api/user/getInviteCode"
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger("tianzibot")
-
-STATE = {}
-
-# ...（此处省略原始大段代码，为节省空间）
-from telegram.ext import ApplicationBuilder, CommandHandler
-
-async def start(update, context):
-    await update.message.reply_text("✅ 天子机器人已启动！")
-
-if __name__ == "__main__":
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.run_polling()
 import os
+import logging
 from flask import Flask
 from threading import Thread
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
+# ================== Flask 保活部分 ==================
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Tianzibot is running!"
+    return "✅ TianziBot is running on Render (keep-alive active)"
 
 def run():
+    """启动 Flask 保活线程"""
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
 def keep_alive():
+    """启动独立线程保持服务运行"""
     t = Thread(target=run)
+    t.daemon = True
     t.start()
 
-# 🔹 在主程序开始前调用它
+# ================== 从环境变量读取配置 ==================
+TOKEN = os.environ.get("TOKEN")  # Telegram Bot Token
+OFFICIAL_SITE_URL = os.environ.get("OFFICIAL_SITE_URL", "https://example.com")
+DOWNLOAD_IMAGE = os.environ.get("DOWNLOAD_IMAGE", "")
+INVITE_IMAGE = os.environ.get("INVITE_IMAGE", "")
+SUPPORT_URL = os.environ.get("SUPPORT_URL", "")
+CHANNEL_URL = os.environ.get("CHANNEL_URL", "")
+ADMIN_GROUP_ID = os.environ.get("ADMIN_GROUP_ID", "")
+BOT_USERNAME = os.environ.get("BOT_USERNAME", "tianzibot")
+
+# ================== 日志配置 ==================
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("tianzibot")
+
+# ================== 机器人功能 ==================
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """启动命令"""
+    await send_main_menu(update)
+
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """菜单命令"""
+    await send_main_menu(update)
+
+async def send_main_menu(update: Update):
+    """显示主菜单"""
+    keyboard = [
+        [InlineKeyboardButton("🌐 官方网站", url=OFFICIAL_SITE_URL)],
+        [InlineKeyboardButton("📱 下载应用", url=DOWNLOAD_IMAGE)],
+        [InlineKeyboardButton("🎁 邀请好友", url=INVITE_IMAGE)],
+        [InlineKeyboardButton("💬 支持群", url=SUPPORT_URL)],
+        [InlineKeyboardButton("📺 官方频道", url=CHANNEL_URL)]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    text = (
+        "✅ 欢迎使用 <b>天子机器人</b>！\n\n"
+        "请从下方菜单中选择功能："
+    )
+
+    await update.message.reply_text(
+        text, parse_mode="HTML", reply_markup=reply_markup
+    )
+
+# ================== 启动主程序 ==================
 if __name__ == "__main__":
+    if not TOKEN:
+        raise ValueError("❌ 未检测到 TOKEN 环境变量，请在 Render 环境中设置 TOKEN")
+
     keep_alive()
 
-    # 你的 Telegram 机器人启动逻辑
-    from telegram.ext import ApplicationBuilder
-    import logging
+    app_bot = ApplicationBuilder().token(TOKEN).build()
+    app_bot.add_handler(CommandHandler("start", start))
+    app_bot.add_handler(CommandHandler("menu", menu))
 
-    logging.basicConfig(level=logging.INFO)
-    app = ApplicationBuilder().token(os.environ["TOKEN"]).build()
-    print("✅ TianziBot is running on Render...")
-    app.run_polling()
+    print("✅ TianziBot 已启动并在 Render 上运行中...")
+    app_bot.run_polling()
