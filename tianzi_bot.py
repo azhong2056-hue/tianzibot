@@ -26,11 +26,13 @@ def keep_alive():
 
 # ================== 从环境变量读取配置 ==================
 TOKEN = os.environ.get("TOKEN")  # Telegram Bot Token
+
+# 如果环境变量没配置，也提供默认值，防止空字符串导致报错
 OFFICIAL_SITE_URL = os.environ.get("OFFICIAL_SITE_URL", "https://example.com")
-DOWNLOAD_IMAGE = os.environ.get("DOWNLOAD_IMAGE", "")
-INVITE_IMAGE = os.environ.get("INVITE_IMAGE", "")
-SUPPORT_URL = os.environ.get("SUPPORT_URL", "")
-CHANNEL_URL = os.environ.get("CHANNEL_URL", "")
+DOWNLOAD_IMAGE = os.environ.get("DOWNLOAD_IMAGE", "https://example.com")
+INVITE_IMAGE = os.environ.get("INVITE_IMAGE", "https://example.com")
+SUPPORT_URL = os.environ.get("SUPPORT_URL", "https://example.com")
+CHANNEL_URL = os.environ.get("CHANNEL_URL", "https://example.com")
 ADMIN_GROUP_ID = os.environ.get("ADMIN_GROUP_ID", "")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "tianzibot")
 
@@ -49,18 +51,25 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def send_main_menu(update: Update):
     """显示主菜单"""
-    keyboard = [
-        [InlineKeyboardButton("🌐 官方网站", url=OFFICIAL_SITE_URL)],
-        [InlineKeyboardButton("📱 下载应用", url=DOWNLOAD_IMAGE)],
-        [InlineKeyboardButton("🎁 邀请好友", url=INVITE_IMAGE)],
-        [InlineKeyboardButton("💬 支持群", url=SUPPORT_URL)],
-        [InlineKeyboardButton("📺 官方频道", url=CHANNEL_URL)]
-    ]
+    keyboard = []
+
+    # ✅ 只添加非空的按钮，避免 Telegram 报错
+    if OFFICIAL_SITE_URL:
+        keyboard.append([InlineKeyboardButton("🌐 官方网站", url=OFFICIAL_SITE_URL)])
+    if DOWNLOAD_IMAGE:
+        keyboard.append([InlineKeyboardButton("📱 下载应用", url=DOWNLOAD_IMAGE)])
+    if INVITE_IMAGE:
+        keyboard.append([InlineKeyboardButton("🎁 邀请好友", url=INVITE_IMAGE)])
+    if SUPPORT_URL:
+        keyboard.append([InlineKeyboardButton("💬 支持群", url=SUPPORT_URL)])
+    if CHANNEL_URL:
+        keyboard.append([InlineKeyboardButton("📺 官方频道", url=CHANNEL_URL)])
+
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     text = (
         "✅ 欢迎使用 <b>天子机器人</b>！\n\n"
-        "请从下方菜单中选择功能："
+        "请从下方菜单中选择功能 👇"
     )
 
     await update.message.reply_text(
